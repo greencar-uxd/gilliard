@@ -30,7 +30,7 @@ PIN은 여전히 앱 단에서만 검증하므로, "앱을 연 사람"까지 막
 
 1. **Firebase 콘솔 → Authentication → Sign-in method → 익명(Anonymous) → 사용 설정.**
    (이걸 안 켜면 4단계 후 앱이 로그인 토큰을 못 받아 전체가 멈춥니다.)
-2. 이 PR의 코드(`index.html` + `app.js`, 익명 로그인 추가)를 **먼저 배포**한다.
+2. 이 PR의 코드(`index.html`, 익명 로그인 추가)를 **먼저 배포**한다.
    - 이 시점엔 규칙이 아직 열려 있어 앱은 평소대로 동작하고, 익명 로그인만 조용히 수행됩니다.
 3. 앱을 열어 정상 동작 확인(데이터 로딩·입력 OK, 콘솔에 `익명 인증 실패` 경고 없음).
 4. **그다음** Firebase 콘솔 → Realtime Database → **규칙(Rules)** 탭에 `database.rules.json`

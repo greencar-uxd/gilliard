@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CREWFIT · G리아드 운영</title>
+<title>gilliard · G리아드 운영</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text x=%2250%22 y=%2254%22 font-size=%2278%22 text-anchor=%22middle%22 dominant-baseline=%22central%22>🎱</text></svg>">
 <!-- 서체 — GDS 지정 Noto Sans KR -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -106,11 +106,11 @@
       <button class="ds-iconbtn ds-iconbtn--sm ds-iconbtn--outline" id="themeBtnLogin" title="다크모드 켜기/끄기" onclick="toggleTheme()"></button>
     </div>
     <div class="brandmark">🎱</div>
-    <h1 style="font:var(--text-h3);text-align:center;margin:0 0 var(--space-1)">CREWFIT · G리아드</h1>
+    <h1 style="font:var(--text-h3);text-align:center;margin:0 0 var(--space-1)">gilliard · G리아드</h1>
     <p class="tiny" style="text-align:center;margin:0 0 var(--space-5)">운영진 전용 · (주)그린카</p>
     <div class="ds-segmented" id="whoBtns" style="width:100%;margin-bottom:var(--space-4)"></div>
     <div class="ds-field">
-      <label class="ds-field__label" for="pin">크루핏 인증번호 (4자리)</label>
+      <label class="ds-field__label" for="pin">인증번호 (4자리)</label>
       <input class="ds-input" id="pin" type="password" inputmode="numeric" maxlength="4" placeholder="••••" autocomplete="off" style="text-align:center;letter-spacing:8px;font-size:var(--fs-lg)">
     </div>
     <button class="ds-btn ds-btn--primary ds-btn--md ds-btn--block" style="margin-top:var(--space-3)" onclick="doLogin()">접속</button>
@@ -198,7 +198,7 @@
     <section class="view" id="view-settings">
       <div class="ds-card ds-card--pad" style="margin-bottom:var(--space-5)"><h3 class="panel-title">기본 정보</h3>
         <div class="ds-table-wrap"><table class="ds-table"><tbody>
-          <tr><td style="width:200px;color:var(--text-tertiary)">동호회 / 소속</td><td>G리아드 (CREWFIT) · (주)그린카</td></tr>
+          <tr><td style="width:200px;color:var(--text-tertiary)">동호회 / 소속</td><td>G리아드 (gilliard) · (주)그린카</td></tr>
           <tr><td style="color:var(--text-tertiary)">회장 / 총무</td><td>강민관 / 정종욱</td></tr>
           <tr><td style="color:var(--text-tertiary)">월 회비(활동회원)</td><td style="white-space:nowrap"><input class="ds-input tnum" id="feeInput" type="number" inputmode="numeric" pattern="[0-9]*" step="1000" style="width:110px" onchange="setFee(this.value)"> 원</td></tr>
           <tr><td style="color:var(--text-tertiary)">당구장 결제일 / 지출결의</td><td>매월 1일 / 매월 18일 마감</td></tr>
@@ -294,8 +294,8 @@
 /* ================= 설정 ================= */
 var ADMINS=['강민관','정종욱'];
 var ADMIN_ROLE={'강민관':'회장','정종욱':'총무'};
-var ADMIN_ID={'강민관':'m17','정종욱':'jrd01'};   /* 크루핏 members 노드 ID */
-/* 크루핏 로스터 ID → 이름 (members 노드에 없는(미인증) 회원의 대전 기록 id 해석용) */
+var ADMIN_ID={'강민관':'m17','정종욱':'jrd01'};   /* members 노드 ID */
+/* 로스터 ID → 이름 (members 노드에 없는(미인증) 회원의 대전 기록 id 해석용) */
 var ROSTER_ID={m17:'강민관',jrd01:'정종욱',jrd02:'조민호',jrd03:'진익영',jrd04:'김경호',jrd05:'김규식',jrd06:'김보성',jrd07:'김성준',jrd08:'김유현',jrd09:'김정수',jrd10:'문영건',jrd11:'박수홍',jrd12:'배지현',jrd13:'서지유',jrd14:'왕건모',jrd15:'이순란',jrd16:'이정걸',jrd17:'이진주',jrd18:'장정우'};
 var FEE_DEFAULT=30000;
 var ACTIVE=['문영건','강민관','이정걸','조민호','배지현','정종욱','장정우'];
@@ -308,7 +308,7 @@ var SUPPORT_PER=30000;
 var FB={apiKey:"AIzaSyDBKcVMjKluqmeahRcZJcxrEfY_BmrsjfA",authDomain:"srk-mt.firebaseapp.com",databaseURL:"https://srk-mt-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"srk-mt",appId:"1:1080501646167:web:88abf17460342d6e260412"};
 var FB_PATH='gilead';
 
-/* 크루핏 인증번호 해시 (app.js hashPin과 동일) */
+/* 인증번호 해시 */
 function hashPin(p){p='srk!'+String(p||'');var h=5381;for(var i=0;i<p.length;i++)h=((h<<5)+h+p.charCodeAt(i))>>>0;return 'p'+h.toString(36);}
 
 /* ================= 아이콘 ================= */
@@ -381,7 +381,7 @@ function fbSubscribe(){
   try{db.ref('.info/connected').on('value',function(s){if(s.val()===true){if(!pending)setSync(canWrite?'ok':'ro');}else{setSync('off');}});}catch(e){}
   try{db.ref(FB_PATH).on('value',function(snap){DB=norm(snap.val()||{});cacheSave();renderAll();if(!pending)setSync(canWrite?'ok':'ro');},
     function(err){setSync('err','읽기 실패: '+(err.code||err.message));});}catch(e){setSync('err','구독 실패: '+e.message);}
-  try{db.ref('clubmatches').on('value',function(s){CM=s.val()||{};renderSuji();});}catch(e){}   // 수지 관리: 크루핏 대전 기록
+  try{db.ref('clubmatches').on('value',function(s){CM=s.val()||{};renderSuji();});}catch(e){}   // 수지 관리: 대전 기록
   try{db.ref('members').on('value',function(s){MB=s.val()||{};renderSuji();});}catch(e){}       // 이름 매핑
 }
 function writeLeaf(path,value){
@@ -402,7 +402,7 @@ function apply(op){
   else if(op.t==='del'){delete m[op.kind][op.id];}
 }
 function mutate(op){
-  if(!canWrite){toast('수정 권한이 없습니다. 크루핏 인증번호로 접속하세요.');return;}
+  if(!canWrite){toast('수정 권한이 없습니다. 인증번호로 접속하세요.');return;}
   apply(op);renderAll();
   if(op.t==='fee')writeLeaf('settings/fee',op.v);
   else if(op.t==='due')writeLeaf('months/'+op.mk+'/dues/'+op.name,op.v?true:null);
@@ -471,14 +471,14 @@ function renderSettings(){document.getElementById('feeInput').value=fee();
 function setFee(v){mutate({t:'fee',v:Math.max(0,parseInt(v)||0)});}
 function renderAll(){renderDash();renderCheck();renderExpense();renderReport();renderSettings();renderSuji();}
 
-/* ================= 수지 관리 (크루핏 대전 기록 연동) ================= */
-/* 에버리지→수지 환산: 전국 전자점수판 통계(1,056클럽·19,117명·129만 경기, 2020) — crewfit app.js와 동일 표 */
+/* ================= 수지 관리 (대전 기록 연동) ================= */
+/* 에버리지→수지 환산: 전국 전자점수판 통계(1,056클럽·19,117명·129만 경기, 2020) */
 var SUJI_AVG=[[10,.184],[15,.270],[20,.398],[25,.589],[30,.829],[35,1.078],[40,1.360]];
 function avgToSuji(avg){if(!avg||avg<=0)return null;var t=SUJI_AVG,lo=t[0],hi=t[1];
   if(avg>=t[t.length-1][1]){lo=t[t.length-2];hi=t[t.length-1];}
   else for(var i=0;i<t.length-1;i++){if(avg<=t[i+1][1]){lo=t[i];hi=t[i+1];break;}}
   var s=lo[0]+(hi[0]-lo[0])*(avg-lo[1])/(hi[1]-lo[1]);return Math.max(5,Math.min(50,Math.round(s)));}
-var CM={},MB={};  // 크루핏 clubmatches(대전 기록) / members — 같은 Firebase 루트에서 구독
+var CM={},MB={};  // clubmatches(대전 기록) / members — 같은 Firebase 루트에서 구독
 var sujiEdits={};   // 편집 중(아직 저장 안 한) 반영수지 — name->value. 저장/초기화 때만 정리 (표 재렌더가 저장값을 0으로 덮지 않게)
 function renderSuji(){
   var el=document.getElementById('sujiTable');if(!el)return;
@@ -511,10 +511,10 @@ function saveSujiAll(){
   for(var i=0;i<inps.length;i++){var nm=inps[i].getAttribute('data-name');var v=parseInt(inps[i].value)||0;if(v>0)DB.suji[nm]=v;else delete DB.suji[nm];writeLeaf('suji/'+nm,v>0?v:null);}  // 로컬에도 즉시 반영
   sujiEdits={};   // 저장 완료 — 편집 상태 해제(이제 저장된 값 표시)
   renderSuji();
-  toast('반영 수지 '+inps.length+'명 저장 — 크루핏 마이페이지에 반영됩니다');
+  toast('반영 수지 '+inps.length+'명 저장');
 }
 
-/* ================= 로그인 (크루핏 인증번호 대조) ================= */
+/* ================= 로그인 (인증번호 대조) ================= */
 var pendingUser=null;
 function buildLogin(){document.getElementById('whoBtns').innerHTML=ADMINS.map(function(n){return '<button class="ds-segmented__btn" style="flex:1" data-u="'+n+'" onclick="pickUser(\''+n+'\')">'+esc(n)+' · '+(ADMIN_ROLE[n]||'운영진')+'</button>';}).join('');}
 function pickUser(n){pendingUser=n;var els=document.querySelectorAll('#whoBtns button');for(var i=0;i<els.length;i++)els[i].classList.toggle('ds-segmented__btn--active',els[i].dataset.u===n);document.getElementById('loginMsg').textContent='';document.getElementById('pin').focus();}
