@@ -21,12 +21,12 @@
 ## 이 레포 고유 규칙 (gilliard)
 
 **구성**
-- 당구 운영관리 앱 하나. 회원 명단·3쿠션 경기 기록·순위·수지·회비를 다룬다.
+- 동호회 운영 관리 앱 하나. 회장·총무가 쓴다. 탭 6개 — 대시보드 · 회비·사진 체크 · 지출 · 월별 결산 · 설정·연동 · 운영 가이드.
 - 순수 정적 파일 4개: `index.html`(앱 전체 — 마크업·스타일·로직이 한 파일), `gds.css`, `gds-theme.css`, `.nojekyll`. 빌드 단계 없음(바닐라 JS, Firebase compat SDK).
 - Firebase 설정·회원 명단·상수는 전부 `index.html` 안에 있다. 외부 `config.js` 없음.
 
 **데이터**
-- Firebase Realtime Database(프로젝트 `srk-mt`, asia-southeast1). 쓰는 경로는 `members`, `clubmatches` 두 개.
+- Firebase Realtime Database(프로젝트 `srk-mt`, asia-southeast1). 쓰는 경로는 `gilead` 하나(`FB_PATH` 상수). 레포 이름과 다르지만 바꾸면 기존 데이터와 끊긴다.
 - **이 DB는 다른 앱과 공유될 수 있다.** 한쪽만 보고 스키마를 바꾸지 말 것.
 - `database.rules.json`이 이 DB 권한 규칙의 원본이다(`.read`/`.write` 전역 규칙). `firebase.json`·`.firebaserc`는 규칙 배포용.
 
@@ -41,9 +41,9 @@
 
 **절대 건드리지 말 것**
 - `index.html`의 Firebase 설정(`FB` 상수 — projectId `srk-mt`, databaseURL 등). 바꾸면 데이터 연결이 끊긴다.
-- RTDB 경로 구조(`members`, `clubmatches`).
-- 회원 PIN(`members/<id>/pin`). 초기화·변경 금지 — 개개인이 설정한 값이다.
-- 명단·설정 상수(`ROSTER_ID`/`ACTIVE`/`GHOST`/`DUES_EXTRA`/`GHOST_FROM`)는 실제 운영 데이터. 사용자 지시 없이 바꾸지 말 것.
+- RTDB 경로 `gilead`(`FB_PATH`).
+- 인증번호 해시(`hashPin`, salt `srk!`)와 `ADMIN_ID`. 회장·총무 로그인이 이걸로 대조된다.
+- 명단·설정 상수(`ACTIVE`/`GHOST`/`DUES_EXTRA`/`GHOST_FROM`/`LEFT_FROM`)는 실제 운영 데이터. 사용자 지시 없이 바꾸지 말 것.
 
 **원칙**
 - 이 레포가 source of truth. Firebase 콘솔에서 데이터 직접 편집은 지양(운영진이 앱에서 조작하는 게 기준).
@@ -51,3 +51,4 @@
 
 **반복해서 틀렸던 것**
 - **스타일시트를 외부 GitHub Pages에서 링크하다 세 번 깨졌다**(`design-system` → jsDelivr → `dsds` Pages). 그 사이트가 안 뜨면 페이지가 통째로 맨 HTML이 된다. 그래서 `gds.css`는 레포 안에 복사해 뒀다. 새 CSS를 외부 링크로 걸지 말 것.
+- **당구 대전 기록 연동은 걷어냈다**(수지 관리 탭). `clubmatches`·`members` 구독과 `ROSTER_ID`도 함께 지웠다. 되살리려면 커밋 `4bd34de` 이전을 볼 것. 이미 저장된 `gilead/suji` 데이터는 DB에 남아 있다.
