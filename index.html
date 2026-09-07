@@ -180,7 +180,6 @@
         <div class="ds-table-wrap"><table class="ds-table"><tbody>
           <tr><td style="width:200px;color:var(--text-tertiary)">동호회 / 소속</td><td>G리아드 (gilliard) · (주)그린카</td></tr>
           <tr><td style="color:var(--text-tertiary)">회장 / 총무</td><td>강민관 / 정종욱</td></tr>
-          <tr><td style="color:var(--text-tertiary)">월 회비 <span class="tiny">· 2026-08까지</span></td><td style="white-space:nowrap"><input class="ds-input tnum" id="feeInput" type="number" inputmode="numeric" pattern="[0-9]*" step="1000" style="width:110px" onchange="setFee(this.value)"> 원</td></tr>
           <tr><td style="color:var(--text-tertiary)">당구장 결제일 / 지출결의</td><td>매월 1일 / 매월 18일 마감</td></tr>
         </tbody></table></div>
       </div>
@@ -299,9 +298,10 @@ var IC={
 };
 
 /* ================= 유틸 ================= */
-var ALL=ACTIVE.concat(GHOST);
-var LEFT_FROM={'김정수':'2026-08'};   // 이 달부터 탈퇴 — 그 이전 달 명단·통계는 그대로 보존
-function allOf(mk){return ALL.filter(function(n){return !LEFT_FROM[n]||mk<LEFT_FROM[n];});}
+var JOIN_FROM={'이태성':'2026-09','김진우':'2026-09'};  // 이 달부터 합류 - 그 이전 달 명단·통계는 그대로 보존
+var ALL=ACTIVE.concat(GHOST).concat(Object.keys(JOIN_FROM));
+var LEFT_FROM={'김정수':'2026-08'};   // 이 달부터 탈퇴 - 그 이전 달 명단·통계는 그대로 보존
+function allOf(mk){return ALL.filter(function(n){return (!JOIN_FROM[n]||mk>=JOIN_FROM[n])&&(!LEFT_FROM[n]||mk<LEFT_FROM[n]);});}
 var CACHE='gilead_cache_v3', SESSION='gilead_session_v1', TABKEY='gilead_tab';
 var _mem={};
 function lsGet(k){try{return localStorage.getItem(k);}catch(e){return _mem[k]||null;}}
@@ -368,7 +368,6 @@ function writeLeaf(path,value){
    .catch(function(e){pending=Math.max(0,pending-1);setSync('err','저장 실패');toast('저장 실패: '+(e.code||e.message));});
 }
 function apply(op){
-  if(op.t==='fee'){DB.settings=DB.settings||{};DB.settings.fee=op.v;return;}
   var m=M(op.mk);
   if(op.t==='due'){if(op.v)m.dues[op.name]=true;else delete m.dues[op.name];}
   else if(op.t==='photo'){if(op.v)m.photos[op.name]=true;else delete m.photos[op.name];}
@@ -379,8 +378,7 @@ function apply(op){
 function mutate(op){
   if(!canWrite){toast('수정 권한이 없습니다. 인증번호로 접속하세요.');return;}
   apply(op);renderAll();
-  if(op.t==='fee')writeLeaf('settings/fee',op.v);
-  else if(op.t==='due')writeLeaf('months/'+op.mk+'/dues/'+op.name,op.v?true:null);
+  if(op.t==='due')writeLeaf('months/'+op.mk+'/dues/'+op.name,op.v?true:null);
   else if(op.t==='photo')writeLeaf('months/'+op.mk+'/photos/'+op.name,op.v?true:null);
   else if(op.t==='check')writeLeaf('months/'+op.mk+'/checklist/'+op.key,op.v?true:null);
   else if(op.t==='add')writeLeaf('months/'+op.mk+'/'+op.kind+'/'+op.item.id,op.item);
@@ -443,11 +441,10 @@ function renderReport(){var keys=Object.keys(DB.months);if(keys.indexOf(current)
   var head='<thead><tr><th>월</th><th class="is-center">회비</th><th class="is-right">회비액</th><th class="is-center">사진</th><th class="is-center">지원조건</th><th class="is-right">토스지출</th><th class="is-right">법인지출</th><th class="is-center">결제</th><th class="is-center">지출결의</th></tr></thead>';
   var body=keys.map(function(mk){var s=stats(mk),m=M(mk);return '<tr><td><b>'+mk.replace('-','.')+'</b></td><td class="is-center tnum">'+(s.noDues?'—':s.duesPaid+'/'+s.duesTarget)+'</td><td class="is-right tnum">'+(s.noDues?'—':won(s.duesAmount))+'</td><td class="is-center tnum">'+s.photoDone+'/'+s.photoTotal+'</td><td class="is-center">'+(s.allPhoto?badge('success','충족'):badge('neutral','미충족'))+'</td><td class="is-right tnum">'+won(s.tossExpense)+'</td><td class="is-right tnum">'+won(s.cardExpense)+'</td><td class="is-center">'+(m.checklist.pay?badge('success','완료'):'—')+'</td><td class="is-center">'+(m.checklist.resolve?badge('success','완료'):'—')+'</td></tr>';}).join('');
   document.getElementById('repTable').innerHTML=head+'<tbody>'+body+'</tbody>';}
-function renderSettings(){document.getElementById('feeInput').value=fee();
+function renderSettings(){
   var roster=koSort(ALL.filter(function(n){return !LEFT_FROM[n];}));
   document.getElementById('listCount').textContent='· '+roster.length+'명';
   document.getElementById('listAll').innerHTML=roster.map(function(n){return '<span class="ds-tag">'+esc(n)+(ADMIN_ROLE[n]?' · '+ADMIN_ROLE[n]:'')+'</span>';}).join('');updateSyncInfo();}
-function setFee(v){mutate({t:'fee',v:Math.max(0,parseInt(v)||0)});}
 function renderAll(){renderDash();renderCheck();renderExpense();renderReport();renderSettings();}
 
 /* ================= 로그인 (인증번호 대조) ================= */
