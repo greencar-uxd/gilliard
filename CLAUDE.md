@@ -18,30 +18,37 @@
 
 ---
 
-## 이 레포 고유 규칙 (CrewFit)
+## 이 레포 고유 규칙 (gilliard)
 
 **구성**
-- 메인 앱 크루핏 `/` (동호회 일정·참석·정산·투표·앨범·3쿠션 순위) + 별도 당구 운영관리 앱 gilead `/gilead/`.
-- 순수 정적 파일: `index.html`, `app.js`, `config.js`, `styles.css` (+ `gilead/index.html`). 빌드 단계 없음(바닐라 JS IIFE, Firebase compat SDK).
-- 데이터: Firebase Realtime Database(프로젝트 `srk-mt`, asia-southeast1). 크루핏=루트, gilead=`/gilead` 경로. **두 앱이 같은 DB를 공유**해서 회비·수지 등이 연동됨.
-- 사진·영상: Cloudinary(cloudName `dpv6iqkfu`, unsigned preset `ml_default`). 파일은 Cloudinary, URL·메타데이터만 Firebase에 저장.
+- 동호회 운영 관리 앱 하나. 회장·총무가 쓴다. 탭 6개 — 대시보드 · 회비·사진 체크 · 지출 · 월별 결산 · 설정·연동 · 운영 가이드.
+- 순수 정적 파일 4개: `index.html`(앱 전체 — 마크업·스타일·로직이 한 파일), `gds.css`, `gds-theme.css`, `.nojekyll`. 빌드 단계 없음(바닐라 JS, Firebase compat SDK).
+- Firebase 설정·회원 명단·상수는 전부 `index.html` 안에 있다. 외부 `config.js` 없음.
+
+**데이터**
+- Firebase Realtime Database(프로젝트 `srk-mt`, asia-southeast1). 쓰는 경로는 `gilead` 하나(`FB_PATH` 상수). 레포 이름과 다르지만 바꾸면 기존 데이터와 끊긴다.
+- **이 DB는 다른 앱과 공유될 수 있다.** 한쪽만 보고 스키마를 바꾸지 말 것.
+- `database.rules.json`이 이 DB 권한 규칙의 원본이다(`.read`/`.write` 전역 규칙). `firebase.json`·`.firebaserc`는 규칙 배포용.
+
+**스타일**
+- 3층 구조: `gds.css`(GDS 원시 토큰 `--gds-*`, 레포 안 복사본) → `gds-theme.css`(시맨틱 층, `--surface-*`/`--text-*`/`--space-*` 등을 `--gds-*`에 매핑) → dsds 컴포넌트 CSS(jsDelivr). `<head>`의 로드 순서를 지킬 것.
+- `gds.css`는 `https://gds-e3y.pages.dev/tokens/gds.css`의 복사본. GDS 토큰이 바뀌면 손으로 다시 받아야 한다(자동 동기화 없음).
 
 **배포**
-- **GitHub Pages.** `main` 브랜치 루트 정적 파일이 그대로 `https://greencar-uxd.github.io/crewfit/` 로 서빙(gilead는 `/crewfit/gilead/`). 커스텀 도메인·빌드·CI 배포 없음.
+- **GitHub Pages.** `main` 브랜치 루트 정적 파일이 그대로 `https://greencar-uxd.github.io/gilliard/`로 서빙. 커스텀 도메인·빌드·CI 배포 없음.
 - **`main` 커밋/머지 = 곧 배포**(1~2분 뒤 반영). 커밋 전 배포돼도 되는 상태인지 확인할 것.
-- 캐시버스팅: `config.js`/`app.js`/`styles.css`를 `?v=분단위타임스탬프`로 로드. 파일명은 그대로 두고 내용만 수정.
 - 반영은 작업 브랜치 → PR → `main` 스쿼시 머지로. `main` 직접 push는 막혀 있음.
 
 **절대 건드리지 말 것**
-- `config.js`의 Firebase 설정(projectId `srk-mt`, databaseURL 등)·Cloudinary 설정(cloudName/preset). 바꾸면 데이터·사진 연결이 끊긴다.
-- RTDB 경로 구조(`gilead`, `clubmatches`, `members`, `roster`, `clubnotices`, `clubpolls`, `clubdues`, `clubmeta`, `clubrecords`, `photos`, `sessions`, `notifications`, `settings`). **두 앱이 공유**하므로 한쪽만 보고 스키마를 바꾸지 말 것.
-- 회원 PIN(`members/<id>/pin`, hashPin salt `srk!`). 초기화·변경 금지 — 개개인이 설정한 값이다.
-- `.github/workflows/cloudinary-cleanup.yml` + `scripts/cloudinary_cleanup.py`: 앨범(`srk-gallery` 태그) 사진을 48h 뒤 자동삭제하는 워크플로(아바타/히어로는 태그 없어 영구). 시크릿(`CLOUDINARY_API_KEY`/`SECRET`)은 읽지도 쓰지도 않는다.
-- gilead 명단·설정(`ACTIVE`/`GHOST`/`DUES`/`GILEAD_ACTIVE`/`ROSTER_ID`)은 실제 운영 데이터. 사용자 지시 없이 바꾸지 말 것.
+- `index.html`의 Firebase 설정(`FB` 상수 — projectId `srk-mt`, databaseURL 등). 바꾸면 데이터 연결이 끊긴다.
+- RTDB 경로 `gilead`(`FB_PATH`).
+- 인증번호 해시(`hashPin`, salt `srk!`)와 `ADMIN_ID`. 회장·총무 로그인이 이걸로 대조된다.
+- 명단·설정 상수(`ACTIVE`/`GHOST`/`DUES_EXTRA`/`GHOST_FROM`/`LEFT_FROM`)는 실제 운영 데이터. 사용자 지시 없이 바꾸지 말 것.
 
 **원칙**
 - 이 레포가 source of truth. Firebase 콘솔에서 데이터 직접 편집은 지양(운영진이 앱에서 조작하는 게 기준).
 - 라이브 Firebase DB는 에이전트가 코드로 직접 쓸 수 없다(권한 밖). 리셋·초기화 등은 인앱 버튼이나 코드 필터로 처리하고, 운영진이 앱에서 눌러야 반영된다.
 
 **반복해서 틀렸던 것**
-<!-- 실수할 때마다 여기에 한 줄씩 추가 -->
+- **스타일시트를 외부 GitHub Pages에서 링크하다 세 번 깨졌다**(`design-system` → jsDelivr → `dsds` Pages). 그 사이트가 안 뜨면 페이지가 통째로 맨 HTML이 된다. 그래서 `gds.css`는 레포 안에 복사해 뒀다. 새 CSS를 외부 링크로 걸지 말 것.
+- **당구 대전 기록 연동은 걷어냈다**(수지 관리 탭). `clubmatches`·`members` 구독과 `ROSTER_ID`도 함께 지웠다. 되살리려면 커밋 `4bd34de` 이전을 볼 것. 이미 저장된 `gilead/suji` 데이터는 DB에 남아 있다.
