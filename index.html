@@ -279,6 +279,7 @@ var GHOST=['김유현','이순란','이진주','김보성','김정수','김성�
 var DUES_EXTRA=['김성준'];  // 고스트지만 회비는 내는 회원
 var DUES=ACTIVE.concat(DUES_EXTRA);  // 회비 대상 = 활동회원(7) + 회비 내는 고스트 = 8명
 var GHOST_FROM={'김경호':'2026-08','김규식':'2026-08','박수홍':'2026-08','진익영':'2026-08'};  // 이 달부터 고스트 — 그 이전 달은 회비 대상으로 계산(과거 결산 보존)
+var CARD_LEFT_FIRST_FROM='2026-09';  // 이 달부터 법인카드 카드는 사용액이 아니라 남은 한도를 앞에 세운다. 그 이전 달은 예전 표기 그대로.
 var NO_DUES_FROM='2026-09';  // 이 달부터 회비를 걷지 않는다. 회비가 활동/고스트 구분의 근거였으므로 구분도 함께 없어진다. 그 이전 달은 그대로 계산해 과거 결산을 보존한다.
 function noDues(mk){return mk>=NO_DUES_FROM;}
 function duesOf(mk){if(noDues(mk))return [];return DUES.concat(Object.keys(GHOST_FROM).filter(function(n){return mk<GHOST_FROM[n];}));}
@@ -393,6 +394,10 @@ function statCard(o){
     (o.sub?'<p class="tiny" style="margin:var(--space-2) 0 0">'+o.sub+'</p>':'')+'</div>';}
 function badge(v,t){return '<span class="ds-badge ds-badge--'+v+'">'+t+'</span>';}
 function emptyState(t,d){return '<div class="ds-empty"><p class="ds-empty__title">'+esc(t)+'</p><p class="ds-empty__desc">'+esc(d)+'</p></div>';}
+function cardStat(s){var left=Math.max(0,s.supportVat-s.cardExpense),bg=(s.allPhoto?badge('success','지원조건 충족'):badge('warning','전원사진 필요'));
+  return current>=CARD_LEFT_FIRST_FROM
+    ? statCard({label:'법인카드 · 남은 한도',value:won(left),badge:bg,sub:'회사 지원 한도 '+won(s.supportVat)+'(부가세 포함) · 사용 '+won(s.cardExpense)})
+    : statCard({label:'법인카드 · 지출결의',value:won(s.cardExpense),badge:bg,sub:'회사 지원 한도 '+won(s.supportVat)+'(부가세 포함) 대비 잔여 '+won(left)});}
 function renderDash(){var s=stats(current);
   document.getElementById('dashKicker').textContent=current.replace('-','년 ')+'월 요약';
   var cards=[];
@@ -400,7 +405,7 @@ function renderDash(){var s=stats(current);
   cards.push(
     statCard({label:'사진 촬영 · 전원 '+s.photoTotal+'명',value:s.photoDone+' / '+s.photoTotal,prog:Math.round(s.photoDone/s.photoTotal*100),badge:(s.allPhoto?badge('success','전원 완료'):badge('warning','미촬영 '+s.unphoto.length+'명')),sub:s.allPhoto?'회사 지원 조건 충족':'전원 촬영 시 지원 조건 충족'}),
     statCard({label:'토스 모임통장 잔액',value:won(tossBalance(current)),badge:badge('success','회비+기타수입 합산'),sub:(s.noDues?'':'이번 달 회비 +'+won(s.duesAmount)+' · ')+'기타수입 +'+won(s.incomeTotal)+' · 지출 '+won(s.tossExpense)}),
-    statCard({label:'법인카드 · 지출결의',value:won(s.cardExpense),badge:(s.allPhoto?badge('success','지원조건 충족'):badge('warning','전원사진 필요')),sub:'회사 지원 한도 '+won(s.supportVat)+'(부가세 포함) 대비 잔여 '+won(Math.max(0,s.supportVat-s.cardExpense))}));
+    cardStat(s));
   document.getElementById('dashCards').innerHTML=cards.join('');
   document.getElementById('unpaidCard').style.display=s.noDues?'none':'';
   document.getElementById('unpaidBox').innerHTML=s.unpaid.length?('<div class="names">'+s.unpaid.map(function(n){return '<span class="ds-tag">'+esc(n)+'</span>';}).join('')+'</div>'):emptyState('회비 완납','활동회원 전원 회비를 납부했습니다');
