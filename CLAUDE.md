@@ -21,7 +21,7 @@
 ## 이 레포 고유 규칙 (gilliard)
 
 **구성**
-- 동호회 운영 관리 앱 하나. 회장·총무가 쓴다. 탭 6개 — 대시보드 · 회비·사진 체크 · 지출 · 월별 결산 · 설정·연동 · 운영 가이드.
+- 동호회 운영 관리 앱 하나. 회장·총무가 쓴다. 탭 6개 - 대시보드 · 회원 체크 · 지출 · 월별 결산 · 설정·연동 · 운영 가이드.
 - 순수 정적 파일 4개: `index.html`(앱 전체 — 마크업·스타일·로직이 한 파일), `gds.css`, `gds-theme.css`, `.nojekyll`. 빌드 단계 없음(바닐라 JS, Firebase compat SDK).
 - Firebase 설정·회원 명단·상수는 전부 `index.html` 안에 있다. 외부 `config.js` 없음.
 
@@ -44,7 +44,12 @@
 - `index.html`의 Firebase 설정(`FB` 상수 — projectId `srk-mt`, databaseURL 등). 바꾸면 데이터 연결이 끊긴다.
 - RTDB 경로 `gilead`(`FB_PATH`).
 - 인증번호 해시(`hashPin`, salt `srk!`)와 `ADMIN_ID`. 회장·총무 로그인이 이걸로 대조된다.
-- 명단·설정 상수(`ACTIVE`/`GHOST`/`DUES_EXTRA`/`GHOST_FROM`/`LEFT_FROM`)는 실제 운영 데이터. 사용자 지시 없이 바꾸지 말 것.
+- 명단·설정 상수(`ACTIVE`/`GHOST`/`DUES_EXTRA`/`GHOST_FROM`/`LEFT_FROM`/`NO_DUES_FROM`)는 실제 운영 데이터. 사용자 지시 없이 바꾸지 말 것.
+
+**운영 규칙이 바뀌면 컷오프 상수로 넣는다**
+- 과거 달의 결산은 그대로 보존해야 한다. 그래서 규칙 변경은 조건문이 아니라 「이 달부터」 상수로 넣는다 — `GHOST_FROM`·`LEFT_FROM`·`NO_DUES_FROM` 이 그 패턴이다.
+- `NO_DUES_FROM='2026-09'` — 2026년 9월부터 회비를 걷지 않는다. 회비가 활동/고스트 구분의 근거였으므로 구분도 함께 없어졌다. 9월 이후 달에는 회비 카드·회비 열·활동/고스트 배지가 안 보이고, 8월 이하 달은 예전 그대로 계산된다.
+- `fee()`(월 회비 금액)는 지웠으면 안 된다. 8월 이하 달의 결산이 이 값으로 계산된다.
 
 **원칙**
 - 이 레포가 source of truth. Firebase 콘솔에서 데이터 직접 편집은 지양(운영진이 앱에서 조작하는 게 기준).
