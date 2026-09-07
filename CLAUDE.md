@@ -44,12 +44,12 @@
 - `index.html`의 Firebase 설정(`FB` 상수 — projectId `srk-mt`, databaseURL 등). 바꾸면 데이터 연결이 끊긴다.
 - RTDB 경로 `gilead`(`FB_PATH`).
 - 인증번호 해시(`hashPin`, salt `srk!`)와 `ADMIN_ID`. 회장·총무 로그인이 이걸로 대조된다.
-- 명단·설정 상수(`ACTIVE`/`GHOST`/`DUES_EXTRA`/`GHOST_FROM`/`LEFT_FROM`/`NO_DUES_FROM`)는 실제 운영 데이터. 사용자 지시 없이 바꾸지 말 것.
+- 명단·설정 상수(`ACTIVE`/`GHOST`/`DUES_EXTRA`/`GHOST_FROM`/`JOIN_FROM`/`LEFT_FROM`/`NO_DUES_FROM`)는 실제 운영 데이터. 사용자 지시 없이 바꾸지 말 것.
 
 **운영 규칙이 바뀌면 컷오프 상수로 넣는다**
-- 과거 달의 결산은 그대로 보존해야 한다. 그래서 규칙 변경은 조건문이 아니라 「이 달부터」 상수로 넣는다 — `GHOST_FROM`·`LEFT_FROM`·`NO_DUES_FROM` 이 그 패턴이다.
+- 과거 달의 결산은 그대로 보존해야 한다. 그래서 규칙 변경은 조건문이 아니라 「이 달부터」 상수로 넣는다 - `GHOST_FROM`(고스트 전환)·`JOIN_FROM`(합류)·`LEFT_FROM`(탈퇴)·`NO_DUES_FROM`(회비 폐지)이 그 패턴이다. 명단에 사람을 더할 때도 `ACTIVE`/`GHOST` 배열을 직접 늘리지 말고 `JOIN_FROM` 에 합류 달을 적는다.
 - `NO_DUES_FROM='2026-09'` — 2026년 9월부터 회비를 걷지 않는다. 회비가 활동/고스트 구분의 근거였으므로 구분도 함께 없어졌다. 9월 이후 달에는 회비 카드·회비 열·활동/고스트 배지가 안 보이고, 8월 이하 달은 예전 그대로 계산된다.
-- `fee()`(월 회비 금액)는 지웠으면 안 된다. 8월 이하 달의 결산이 이 값으로 계산된다.
+- `fee()`(월 회비 금액)는 지웠으면 안 된다. 8월 이하 달의 결산이 이 값으로 계산된다. 설정 탭의 월 회비 입력칸은 고칠 일이 없어 뺐고, 값은 RTDB `settings/fee` 에 그대로 남아 있다.
 
 **원칙**
 - 이 레포가 source of truth. Firebase 콘솔에서 데이터 직접 편집은 지양(운영진이 앱에서 조작하는 게 기준).
