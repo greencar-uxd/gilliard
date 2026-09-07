@@ -36,7 +36,6 @@
   .tnum{font-variant-numeric:tabular-nums}
   .ds-table th.is-right,.ds-table td.is-right{text-align:right}   /* 행 제목(헤더)과 값 정렬 일치 보장 */
   .ds-table th.is-center,.ds-table td.is-center{text-align:center}
-  .suji-inp{text-align:center}                                     /* 반영 수지 입력 숫자 가운데 정렬 */
   .login{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:var(--space-5);background:var(--surface-page);overflow:auto}
   .login .box{width:100%;max-width:404px}
   .brandmark{width:48px;height:48px;display:grid;place-items:center;margin:0 auto var(--space-3);font-size:38px;line-height:1}
@@ -139,7 +138,6 @@
           <button class="ds-tab" data-tab="check">회비·사진 체크</button>
           <button class="ds-tab" data-tab="expense">지출</button>
           <button class="ds-tab" data-tab="report">월별 결산</button>
-          <button class="ds-tab" data-tab="suji">수지 관리</button>
           <button class="ds-tab" data-tab="settings">설정·연동</button>
           <button class="ds-tab" data-tab="guide">운영 가이드</button>
         </div>
@@ -180,19 +178,6 @@
 
     <section class="view" id="view-report">
       <div class="ds-card ds-card--pad"><h3 class="panel-title">월별 결산</h3><div class="ds-table-wrap"><table class="ds-table" id="repTable"></table></div></div>
-    </section>
-
-    <section class="view" id="view-suji">
-      <div class="ds-card ds-card--pad">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);margin-bottom:var(--space-3)">
-          <h3 class="panel-title" style="margin:0">수지 관리</h3>
-          <button class="ds-btn ds-btn--primary ds-btn--md" onclick="saveSujiAll()">전체 저장</button>
-        </div>
-        <div class="ds-table-wrap"><table class="ds-table" id="sujiTable"></table></div>
-        <div style="margin-top:var(--space-4)">
-          <button class="ds-btn ds-btn--md" onclick="resetSujiInputs()">초기화</button>
-        </div>
-      </div>
     </section>
 
     <section class="view" id="view-settings">
@@ -295,8 +280,6 @@
 var ADMINS=['강민관','정종욱'];
 var ADMIN_ROLE={'강민관':'회장','정종욱':'총무'};
 var ADMIN_ID={'강민관':'m17','정종욱':'jrd01'};   /* members 노드 ID */
-/* 로스터 ID → 이름 (members 노드에 없는(미인증) 회원의 대전 기록 id 해석용) */
-var ROSTER_ID={m17:'강민관',jrd01:'정종욱',jrd02:'조민호',jrd03:'진익영',jrd04:'김경호',jrd05:'김규식',jrd06:'김보성',jrd07:'김성준',jrd08:'김유현',jrd09:'김정수',jrd10:'문영건',jrd11:'박수홍',jrd12:'배지현',jrd13:'서지유',jrd14:'왕건모',jrd15:'이순란',jrd16:'이정걸',jrd17:'이진주',jrd18:'장정우'};
 var FEE_DEFAULT=30000;
 var ACTIVE=['문영건','강민관','이정걸','조민호','배지현','정종욱','장정우'];
 var GHOST=['김유현','이순란','이진주','김보성','김정수','김성준','김경호','김규식','박수홍','진익영'];  // 김성준: 활동회원(순위·수지) 제외, 사진·지원 명단(고스트)엔 유지
@@ -381,8 +364,6 @@ function fbSubscribe(){
   try{db.ref('.info/connected').on('value',function(s){if(s.val()===true){if(!pending)setSync(canWrite?'ok':'ro');}else{setSync('off');}});}catch(e){}
   try{db.ref(FB_PATH).on('value',function(snap){DB=norm(snap.val()||{});cacheSave();renderAll();if(!pending)setSync(canWrite?'ok':'ro');},
     function(err){setSync('err','읽기 실패: '+(err.code||err.message));});}catch(e){setSync('err','구독 실패: '+e.message);}
-  try{db.ref('clubmatches').on('value',function(s){CM=s.val()||{};renderSuji();});}catch(e){}   // 수지 관리: 대전 기록
-  try{db.ref('members').on('value',function(s){MB=s.val()||{};renderSuji();});}catch(e){}       // 이름 매핑
 }
 function writeLeaf(path,value){
   if(!db){toast('아직 연결 전입니다. 잠시 후 다시');return;}
@@ -469,50 +450,7 @@ function renderSettings(){document.getElementById('feeInput').value=fee();
   document.getElementById('listActive').innerHTML=ACTIVE.map(function(n){return '<span class="ds-tag">'+esc(n)+(ADMIN_ROLE[n]?' · '+ADMIN_ROLE[n]:'')+'</span>';}).join('');
   document.getElementById('listGhost').innerHTML=GHOST.filter(function(n){return !LEFT_FROM[n];}).map(function(n){return '<span class="ds-tag" style="background:var(--surface-accent-subtle);color:var(--text-accent);border-color:transparent">'+esc(n)+'</span>';}).join('');updateSyncInfo();}
 function setFee(v){mutate({t:'fee',v:Math.max(0,parseInt(v)||0)});}
-function renderAll(){renderDash();renderCheck();renderExpense();renderReport();renderSettings();renderSuji();}
-
-/* ================= 수지 관리 (대전 기록 연동) ================= */
-/* 에버리지→수지 환산: 전국 전자점수판 통계(1,056클럽·19,117명·129만 경기, 2020) */
-var SUJI_AVG=[[10,.184],[15,.270],[20,.398],[25,.589],[30,.829],[35,1.078],[40,1.360]];
-function avgToSuji(avg){if(!avg||avg<=0)return null;var t=SUJI_AVG,lo=t[0],hi=t[1];
-  if(avg>=t[t.length-1][1]){lo=t[t.length-2];hi=t[t.length-1];}
-  else for(var i=0;i<t.length-1;i++){if(avg<=t[i+1][1]){lo=t[i];hi=t[i+1];break;}}
-  var s=lo[0]+(hi[0]-lo[0])*(avg-lo[1])/(hi[1]-lo[1]);return Math.max(5,Math.min(50,Math.round(s)));}
-var CM={},MB={};  // clubmatches(대전 기록) / members — 같은 Firebase 루트에서 구독
-var sujiEdits={};   // 편집 중(아직 저장 안 한) 반영수지 — name->value. 저장/초기화 때만 정리 (표 재렌더가 저장값을 0으로 덮지 않게)
-function renderSuji(){
-  var el=document.getElementById('sujiTable');if(!el)return;
-  var agg={};
-  Object.keys(CM).forEach(function(cid){var ms=CM[cid]||{};Object.keys(ms).forEach(function(k){var m=ms[k];if(!m||!m.p1||!m.p2)return;
-    if(!m.sessionId||m.restored)return;  // 1:1 대결 스케쥴 결과만 집계 — 직접 입력·복원 기록 제외(최근 수지)
-    [m.p1,m.p2].forEach(function(p){if(!p||!p.id)return;var a=agg[p.id]=agg[p.id]||{games:0,score:0,inn:0};a.games++;if(+p.innings>0){a.score+=(+p.score||0);a.inn+=(+p.innings||0);}});});});  // 이닝 없는 복원 경기는 avg 제외
-  var byName={};
-  Object.keys(agg).forEach(function(id){var nm=(MB[id]&&MB[id].name)||ROSTER_ID[id]||id;var b=byName[nm]=byName[nm]||{games:0,score:0,inn:0};b.games+=agg[id].games;b.score+=agg[id].score;b.inn+=agg[id].inn;});
-  var suji=DB.suji||{};
-  // 명단 = 활동회원 전원 + 대전 참가자 + 반영 수지 보유자 (가나다순) — 데이터 없으면 전부 0
-  var SUJI_EXCLUDE=['김성준'];  // 수지 관리 표에서만 제외(회비·사진 명단엔 유지)
-  var set={};ACTIVE.forEach(function(n){set[n]=1;});Object.keys(byName).forEach(function(n){set[n]=1;});Object.keys(suji).forEach(function(n){set[ROSTER_ID[n]||n]=1;});
-  SUJI_EXCLUDE.forEach(function(n){delete set[n];});
-  var rows=Object.keys(set).map(function(nm){var a=byName[nm]||{games:0,score:0,inn:0};var avg=a.inn?a.score/a.inn:0;return{name:nm,games:a.games,rec:avgToSuji(avg)||0};});
-  rows.sort(function(x,y){return x.name.localeCompare(y.name,'ko');});
-  // 편집 중이던 인풋에 포커스 복원용 — 표는 sujiEdits(사용자가 실제로 바꾼 값)만 우선 사용
-  var _act=document.activeElement,_fName=(_act&&_act.getAttribute&&(''+_act.className).indexOf('suji-inp')>=0)?_act.getAttribute('data-name'):null;
-  el.innerHTML='<thead><tr><th>이름</th><th class="is-center">6월 수지</th><th class="is-center">반영 수지</th></tr></thead><tbody>'+
-    rows.map(function(r){var cur=(sujiEdits[r.name]!=null)?sujiEdits[r.name]:((suji[r.name]!=null)?suji[r.name]:0);   // 편집값 > 저장값 > 0
-      return '<tr><td>'+esc(r.name)+'</td><td class="is-center tnum">0</td>'+   // 6월 수지: 이력 없음 — 전부 0 표기
-        '<td class="is-center"><input class="ds-input tnum suji-inp" data-name="'+esc(r.name)+'" type="number" inputmode="numeric" pattern="[0-9]*" min="0" style="width:90px" value="'+cur+'" oninput="sujiEdits[this.getAttribute(\'data-name\')]=this.value"></td></tr>';}).join('')+'</tbody>';
-  if(_fName){var _ni=el.querySelectorAll('.suji-inp');for(var _k=0;_k<_ni.length;_k++){if(_ni[_k].getAttribute('data-name')===_fName){var _l=(''+_ni[_k].value).length;_ni[_k].focus();try{_ni[_k].setSelectionRange(_l,_l);}catch(e){}break;}}}
-}
-function resetSujiInputs(){var inps=document.querySelectorAll('.suji-inp');for(var i=0;i<inps.length;i++){inps[i].value=0;sujiEdits[inps[i].getAttribute('data-name')]='0';}toast('반영 수지를 0으로 — 전체 저장을 눌러야 반영됩니다');}
-function saveSujiAll(){
-  if(!canWrite){toast('로그인 후 저장할 수 있습니다');return;}
-  var inps=document.querySelectorAll('.suji-inp');if(!inps.length){toast('저장할 항목이 없습니다');return;}
-  DB.suji=DB.suji||{};
-  for(var i=0;i<inps.length;i++){var nm=inps[i].getAttribute('data-name');var v=parseInt(inps[i].value)||0;if(v>0)DB.suji[nm]=v;else delete DB.suji[nm];writeLeaf('suji/'+nm,v>0?v:null);}  // 로컬에도 즉시 반영
-  sujiEdits={};   // 저장 완료 — 편집 상태 해제(이제 저장된 값 표시)
-  renderSuji();
-  toast('반영 수지 '+inps.length+'명 저장');
-}
+function renderAll(){renderDash();renderCheck();renderExpense();renderReport();renderSettings();}
 
 /* ================= 로그인 (인증번호 대조) ================= */
 var pendingUser=null;
