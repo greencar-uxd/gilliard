@@ -33,6 +33,7 @@
 **스타일**
 - 3층 구조: `gds.css`(GDS 원시 토큰 `--gds-*`, 레포 안 복사본) → `gds-theme.css`(시맨틱 층, `--surface-*`/`--text-*`/`--space-*` 등을 `--gds-*`에 매핑) → dsds 컴포넌트 CSS(jsDelivr). `<head>`의 로드 순서를 지킬 것.
 - `gds.css`는 `https://gds-e3y.pages.dev/tokens/gds.css`의 복사본. GDS 토큰이 바뀌면 손으로 다시 받아야 한다(자동 동기화 없음).
+- **라이트 전용이다. 다크 모드를 만들지 말 것** — GDS 에 다크 팔레트가 없다. 예전엔 Navy 램프로 지어 썼지만 근거 없는 색이라 걷어냈다.
 
 **배포**
 - **GitHub Pages.** `main` 브랜치 루트 정적 파일이 그대로 `https://greencar-uxd.github.io/gilliard/`로 서빙. 커스텀 도메인·빌드·CI 배포 없음.
